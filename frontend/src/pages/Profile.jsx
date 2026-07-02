@@ -5,7 +5,7 @@ import { profileStyles } from "../assets/dummyStyles";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 
-const BASE_URL = "http://localhost:4000/api";
+const BASE_URL = "https://expenso-backend-8529.onrender.com/api";
 
 // Move PasswordInput component outside of ProfilePage to prevent recreation on every render
 const PasswordInput = memo(({ name, label, value, error, showField, onToggle, onChange, disabled }) => (

@@ -9,7 +9,7 @@ import Income from "./pages/Income";
 import Expense from "./pages/Expense";
 import Profile from "./pages/Profile";
 
-const API_URL = "http://localhost:4000";
+const API_URL = "https://expenso-backend-8529.onrender.com";
 
 //to get transaction from localstorage 
 const getTransactionsFromStorage = () => {
