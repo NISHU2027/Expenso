@@ -9,7 +9,7 @@ import expenseRouter from './routes/expenseRout.js';
 import dashboardRouter from './routes/dashboardRoutes.js';
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 
 //MIDDLEWARE
 app.use(cors());
