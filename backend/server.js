@@ -12,7 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 if (!process.env.JWT_SECRET) {
-  console.error('JWT_SECRET is not set. Add it to your backend .env or hosting environment.');
+  console.error('JWT_SECRET is not set. Add JWT_SECRET to your backend hosting environment variables.');
   process.exit(1);
 }
 
