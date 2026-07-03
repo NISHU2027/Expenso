@@ -3,6 +3,7 @@ import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../config/env.js';
+import { serverError } from '../utils/apiResponse.js';
 
 const TOKEN_EXPIRES = '2d';     // Token expiration time
 
@@ -59,11 +60,7 @@ export async function registerUser(req, res) {
 
     } 
     catch (err) {
-        console.error(err);
-        res.status(500).json({ 
-            success: false,
-            message: "Server error. Please try again later." 
-        });
+        return serverError(res, err, "registerUser", "Server error. Please try again later.");
     }
 }
 
@@ -110,11 +107,7 @@ export async function loginUser(req, res) {
 
 
     }catch (err) {
-        console.error(err);
-        res.status(500).json({ 
-            success: false,
-            message: "Server Error" 
-        });
+        return serverError(res, err, "loginUser");
         
     }
 }
@@ -136,11 +129,7 @@ export async function getCurrentUser(req, res) {
     }
     
     catch (err) {
-        console.error(err);
-        res.status(500).json({ 
-            success: false,
-            message: "Server Error" 
-        });
+        return serverError(res, err, "getCurrentUser");
     }
 }
 
@@ -186,11 +175,7 @@ export async function updateUser(req, res) {
     }
 
     catch (err) {
-        console.error(err);
-        res.status(500).json({ 
-            success: false,
-            message: "Server Error" 
-        });
+        return serverError(res, err, "updateUser");
     } 
 }
 
@@ -226,11 +211,7 @@ export async function changePassword(req, res) {
         });
     } 
     catch (err) {       
-        console.error(err);             
-        res.status(500).json({ 
-            success: false,
-            message: "Server Error" 
-        });
+        return serverError(res, err, "changePassword");
     }
 
 }   

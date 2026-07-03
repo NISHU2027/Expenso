@@ -1,7 +1,7 @@
 import expenseModel from "../models/expenseModel.js";
-import mongoose from "mongoose";
 import XLSX from "xlsx";
 import getDataRange from "../utils/dataFilter.js";
+import { invalidObjectId, parseTransactionInput, serverError } from "../utils/apiResponse.js";
 
 
 //add expense
@@ -10,35 +10,14 @@ export async function addExpense(req, res) {
     const { description, amount, category, date } = req.body;   
 
     try {
-        if (!description || amount === undefined || !category || !date) {
-            return res.status(400).json({
-                success: false,
-                message: "All fields are required",
-            });
-        }
-        const parsedAmount = Number(amount);
-        const parsedDate = new Date(date);
-
-        if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Amount must be a valid positive number",
-            });
-        }
-
-        if (Number.isNaN(parsedDate.getTime())) {
-            return res.status(400).json({
-                success: false,
-                message: "Date must be valid",
-            });
+        const { data, error } = parseTransactionInput({ description, amount, category, date });
+        if (error) {
+            return res.status(400).json(error);
         }
 
         const newExpense = new expenseModel({
             userId,
-            description: description.trim(),    
-            amount: parsedAmount,
-            category,
-            date: parsedDate,
+            ...data,
         });
         await newExpense.save();
         res.json({
@@ -47,11 +26,7 @@ export async function addExpense(req, res) {
         });
     }
     catch (error) {
-        console.log(error);
-        res.status(500).json({
-            success: false,
-            message: "Server Error",
-        });
+        return serverError(res, error, "addExpense");
     }
 }
 
@@ -63,11 +38,7 @@ export async function getAllExpense(req, res) {
         res.json(expense);
     }   
     catch (error) {
-        console.log(error);
-        res.status(500).json({
-            success: false,
-            message: "Server Error",
-        });
+        return serverError(res, error, "getAllExpense");
     }
 }
 
@@ -77,45 +48,19 @@ export async function updateExpense(req, res) {
     const userId = req.user._id;
     const { description, amount, category, date } = req.body;
     try {
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid expense id",
-            });
+        const idError = invalidObjectId(id, "expense");
+        if (idError) {
+            return res.status(400).json(idError);
         }
 
-        if (!description || amount === undefined || !category || !date) {
-            return res.status(400).json({
-                success: false,
-                message: "All fields are required",
-            });
-        }
-
-        const parsedAmount = Number(amount);
-        const parsedDate = new Date(date);
-
-        if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Amount must be a valid positive number",
-            });
-        }
-
-        if (Number.isNaN(parsedDate.getTime())) {
-            return res.status(400).json({
-                success: false,
-                message: "Date must be valid",
-            });
+        const { data: update, error } = parseTransactionInput({ description, amount, category, date });
+        if (error) {
+            return res.status(400).json(error);
         }
 
         const updatedExpense = await expenseModel.findOneAndUpdate(
             { _id: id, userId },
-            {
-                description: description.trim(),
-                amount: parsedAmount,
-                category,
-                date: parsedDate,
-            },
+            update,
             { new: true, runValidators: true }
         );
 
@@ -131,11 +76,7 @@ export async function updateExpense(req, res) {
             data: updatedExpense,
         });
     } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            success: false,
-            message: "Server Error",
-        });
+        return serverError(res, error, "updateExpense");
     }
 }
 
@@ -143,11 +84,9 @@ export async function updateExpense(req, res) {
 export async function deleteExpense(req, res) {
     const userId = req.user._id;
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid expense id",
-      });
+    const idError = invalidObjectId(req.params.id, "expense");
+    if (idError) {
+      return res.status(400).json(idError);
     }
 
     const expense = await expenseModel.findOneAndDelete({
@@ -167,11 +106,7 @@ export async function deleteExpense(req, res) {
       message: "Expense Deleted Successfully",
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    return serverError(res, error, "deleteExpense");
   }
 }
 
@@ -202,11 +137,7 @@ export async function downloadExpenseExcel(req, res) {
     );
     res.send(buffer);
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    return serverError(res, error, "downloadExpenseExcel");
   }
 }
 
@@ -246,10 +177,6 @@ export async function getExpenseOverview(req, res) {
     }
 
         catch (error) {
-            console.log(error);
-            res.status(500).json({
-                success: false,
-                message: "Server Error",
-            });
+            return serverError(res, error, "getExpenseOverview");
         }
 }

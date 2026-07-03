@@ -1,7 +1,7 @@
 import incomeModel from "../models/incomeModel.js";
-import mongoose from "mongoose";
 import XLSX from "xlsx";
 import getDataRange from "../utils/dataFilter.js";
+import { invalidObjectId, parseTransactionInput, serverError } from "../utils/apiResponse.js";
 
 //add 
 export async function addIncome(req, res) {
@@ -9,36 +9,14 @@ export async function addIncome(req, res) {
   const { description, amount, category, date } = req.body;
 
   try {
-    if (!description || amount === undefined || !category || !date) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required",
-      });
-    }
-
-    const parsedAmount = Number(amount);
-    const parsedDate = new Date(date);
-
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Amount must be a valid positive number",
-      });
-    }
-
-    if (Number.isNaN(parsedDate.getTime())) {
-      return res.status(400).json({
-        success: false,
-        message: "Date must be valid",
-      });
+    const { data, error } = parseTransactionInput({ description, amount, category, date });
+    if (error) {
+      return res.status(400).json(error);
     }
 
     const newIncome = new incomeModel({
       userId,
-      description: description.trim(),
-      amount: parsedAmount,
-      category,
-      date: parsedDate,
+      ...data,
     });
 
     await newIncome.save();
@@ -47,11 +25,7 @@ export async function addIncome(req, res) {
       message: "Income Added Successfully",
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    return serverError(res, error, "addIncome");
   }
 }
 
@@ -65,11 +39,7 @@ export async function getAllIncome(req, res) {
     } 
     
     catch (error) {
-        console.log(error);
-        res.status(500).json({
-            success: false,
-            message: "Server Error",
-        });
+        return serverError(res, error, "getAllIncome");
 
 
     }
@@ -83,48 +53,20 @@ export async function updateIncome(req, res) {
   const { description, amount, category, date } = req.body;
 
   try {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid income id",
-      });
+    const idError = invalidObjectId(id, "income");
+    if (idError) {
+      return res.status(400).json(idError);
     }
 
-    const parsedAmount = Number(amount);
-    const parsedDate = new Date(date);
-
-    if (!description || amount === undefined || !category || !date) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required",
-      });
+    const { data: update, error } = parseTransactionInput({ description, amount, category, date });
+    if (error) {
+      return res.status(400).json(error);
     }
-
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Amount must be a valid positive number",
-      });
-    }
-
-    if (Number.isNaN(parsedDate.getTime())) {
-      return res.status(400).json({
-        success: false,
-        message: "Date must be valid",
-      });
-    }
-
-    const update = {
-      description: description.trim(),
-      amount: parsedAmount,
-      category,
-      date: parsedDate,
-    };
 
     const updated = await incomeModel.findOneAndUpdate(
       { _id: id, userId },
       update,
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!updated) {
@@ -140,11 +82,7 @@ export async function updateIncome(req, res) {
       data: updated,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    return serverError(res, error, "updateIncome");
   }
 }
 
@@ -152,11 +90,9 @@ export async function updateIncome(req, res) {
 export async function deleteIncome(req, res) {
   const userId = req.user._id;
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid income id",
-      });
+    const idError = invalidObjectId(req.params.id, "income");
+    if (idError) {
+      return res.status(400).json(idError);
     }
 
     const income = await incomeModel.findOneAndDelete({
@@ -176,11 +112,7 @@ export async function deleteIncome(req, res) {
       message: "Income Deleted Successfully",
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    return serverError(res, error, "deleteIncome");
   }
 }
 
@@ -212,11 +144,7 @@ export async function downloadIncomeExcel(req, res) {
     );
     res.send(buffer);
   } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    return serverError(res, error, "downloadIncomeExcel");
   }
 }
 
@@ -253,11 +181,7 @@ export async function getIncomeOverview(req, res) {
     }
 
         catch (error) {
-            console.log(error);
-            res.status(500).json({
-                success: false,
-                message: "Server Error",
-            });
+            return serverError(res, error, "getIncomeOverview");
         }
 }
         
