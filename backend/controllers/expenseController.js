@@ -1,4 +1,5 @@
 import expenseModel from "../models/expenseModel.js";
+import mongoose from "mongoose";
 import XLSX from "xlsx";
 import getDataRange from "../utils/dataFilter.js";
 
@@ -15,12 +16,29 @@ export async function addExpense(req, res) {
                 message: "All fields are required",
             });
         }
+        const parsedAmount = Number(amount);
+        const parsedDate = new Date(date);
+
+        if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Amount must be a valid positive number",
+            });
+        }
+
+        if (Number.isNaN(parsedDate.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: "Date must be valid",
+            });
+        }
+
         const newExpense = new expenseModel({
             userId,
-            description,    
-            amount,
+            description: description.trim(),    
+            amount: parsedAmount,
             category,
-            date: new Date(date),
+            date: parsedDate,
         });
         await newExpense.save();
         res.json({
@@ -55,16 +73,53 @@ export async function getAllExpense(req, res) {
 
 //to update expense
 export async function updateExpense(req, res) {
-    const {id} = req.params.id;
+    const { id } = req.params;
     const userId = req.user._id;
     const { description, amount, category, date } = req.body;
     try {
-        const updateExpense = await expenseModel.findOne(
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid expense id",
+            });
+        }
+
+        if (!description || amount === undefined || !category || !date) {
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required",
+            });
+        }
+
+        const parsedAmount = Number(amount);
+        const parsedDate = new Date(date);
+
+        if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Amount must be a valid positive number",
+            });
+        }
+
+        if (Number.isNaN(parsedDate.getTime())) {
+            return res.status(400).json({
+                success: false,
+                message: "Date must be valid",
+            });
+        }
+
+        const updatedExpense = await expenseModel.findOneAndUpdate(
             { _id: id, userId },
-            { description, amount},
-            {new: true }
+            {
+                description: description.trim(),
+                amount: parsedAmount,
+                category,
+                date: parsedDate,
+            },
+            { new: true, runValidators: true }
         );
-        if (!updateExpense) {
+
+        if (!updatedExpense) {
             return res.status(404).json({
                 success: false,
                 message: "Expense not found",
@@ -73,6 +128,7 @@ export async function updateExpense(req, res) {
         res.json({
             success: true,
             message: "Expense Updated Successfully",
+            data: updatedExpense,
         });
     } catch (error) {
         console.log(error);
@@ -87,6 +143,13 @@ export async function updateExpense(req, res) {
 export async function deleteExpense(req, res) {
     const userId = req.user._id;
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid expense id",
+      });
+    }
+
     const expense = await expenseModel.findOneAndDelete({
       _id: req.params.id,
       userId,
@@ -127,8 +190,17 @@ export async function downloadExpenseExcel(req, res) {
     const worksheet = XLSX.utils.json_to_sheet(plainData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "expense");
-    XLSX.writeFile(workbook, "expense_details.xlsx");
-    res.download("expense_details.xlsx");
+    const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="expense_details.xlsx"'
+    );
+    res.send(buffer);
   } catch (error) {
     console.log(error);
     res.status(500).json({

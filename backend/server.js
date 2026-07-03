@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import { connectDB } from './config/db.js';
+import { validateEnv } from './config/env.js';
 
 import userRouter from './routes/userRoute.js';
 import incomeRouter from './routes/incomeRoute.js';
@@ -10,13 +11,6 @@ import dashboardRouter from './routes/dashboardRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-
-if (!process.env.JWT_SECRET) {
-  console.error('JWT_SECRET is not set.');
-  console.error('Add a JWT_SECRET environment variable to the deployed backend service, then redeploy/restart it.');
-  console.error(`Current NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
-  process.exit(1);
-}
 
 //MIDDLEWARE
 app.use(cors());
@@ -35,12 +29,14 @@ app.get('/', (req, res) => {
 
 const startServer = async () => {
   try {
+    validateEnv();
     await connectDB();
     app.listen(PORT, () => {
       console.log(`Server Started on http://localhost:${PORT}`);
     });
   } catch (err) {
     console.error('Failed to start server:', err.message);
+    console.error(`Current NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
     process.exit(1);
   }
 };

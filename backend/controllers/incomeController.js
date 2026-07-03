@@ -1,4 +1,5 @@
 import incomeModel from "../models/incomeModel.js";
+import mongoose from "mongoose";
 import XLSX from "xlsx";
 import getDataRange from "../utils/dataFilter.js";
 
@@ -82,6 +83,13 @@ export async function updateIncome(req, res) {
   const { description, amount, category, date } = req.body;
 
   try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid income id",
+      });
+    }
+
     const parsedAmount = Number(amount);
     const parsedDate = new Date(date);
 
@@ -144,6 +152,13 @@ export async function updateIncome(req, res) {
 export async function deleteIncome(req, res) {
   const userId = req.user._id;
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid income id",
+      });
+    }
+
     const income = await incomeModel.findOneAndDelete({
       _id: req.params.id,
       userId,

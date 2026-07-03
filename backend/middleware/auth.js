@@ -1,13 +1,12 @@
 import User from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET;
+import { getJwtSecret } from '../config/env.js';
 
 export default async function authMiddleware(req, res, next) {
     
     //grad the token
     const authHeader = req.headers.authorization || "";
-    const [scheme, token] = authHeader.split(" ");
+    const [scheme, token] = authHeader.trim().split(/\s+/);
     if (scheme?.toLowerCase() !== "bearer" || !token) {
         return res.status(401).json({ 
             success: false,
@@ -17,7 +16,7 @@ export default async function authMiddleware(req, res, next) {
 
     //verify token
     try {
-        const payload = jwt.verify(token, JWT_SECRET);
+        const payload = jwt.verify(token, getJwtSecret());
         const user = await User.findById(payload.id).select('-password');
         if (!user) {
             return res.status(401).json({ 

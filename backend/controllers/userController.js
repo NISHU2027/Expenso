@@ -2,26 +2,28 @@ import User from '../models/userModel.js';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../config/env.js';
 
-const JWT_SECRET = process.env.JWT_SECRET;  // from .env
 const TOKEN_EXPIRES = '2d';     // Token expiration time
 
 const createToken = (userId) => {
-    return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: TOKEN_EXPIRES });
-    //jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: TOKEN_EXPIRES });
+    return jwt.sign({ id: userId }, getJwtSecret(), { expiresIn: TOKEN_EXPIRES });
 }
 
 
 //REGISTER USER
 export async function registerUser(req, res) {
     const { name, email, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+    const trimmedName = name?.trim();
+
     if (!name || !email || !password) {
         return res.status(400).json({ 
             success: false,
             message: "All fields are required." 
         });
     }
-    if (!validator.isEmail(email)) {
+    if (!validator.isEmail(normalizedEmail)) {
         return res.status(400).json({ 
             success: false,
             message: "Invalid email format." 
@@ -35,14 +37,14 @@ export async function registerUser(req, res) {
     }
 
     try {
-        if (await User.findOne({ email })) {
+        if (await User.findOne({ email: normalizedEmail })) {
             return res.status(409).json({ 
                 success: false,
                 message: "Email already exists." 
             });
         }
         const hashed = await bcrypt.hash(password, 10);
-        const user = await User.create({ name, email, password: hashed });
+        const user = await User.create({ name: trimmedName, email: normalizedEmail, password: hashed });
         const token = createToken(user._id);
         res.status(201).json({ 
             success: true,
@@ -68,6 +70,8 @@ export async function registerUser(req, res) {
 //to login a user 
 export async function loginUser(req, res) {
     const { email, password } = req.body;
+    const normalizedEmail = email?.trim().toLowerCase();
+
     if (!email || !password) {
         return res.status(400).json({ 
             success: false,
@@ -77,7 +81,7 @@ export async function loginUser(req, res) {
 
 
     try {
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
             return res.status(401).json({ 
                 success: false,
@@ -143,7 +147,10 @@ export async function getCurrentUser(req, res) {
 // to update user details
 export async function updateUser(req, res) {
     const { name, email } = req.body;
-    if (!name || !email || !validator.isEmail(email)) {
+    const normalizedEmail = email?.trim().toLowerCase();
+    const trimmedName = name?.trim();
+
+    if (!trimmedName || !normalizedEmail || !validator.isEmail(normalizedEmail)) {
         return res.status(400).json({ 
             success: false,
             message: "Valid name and email are required." 
@@ -151,7 +158,7 @@ export async function updateUser(req, res) {
     }
 
     try {
-        const exists = await User.findOne({ email, _id: { $ne: req.user.id } });
+        const exists = await User.findOne({ email: normalizedEmail, _id: { $ne: req.user.id } });
         if (exists) {
             return res.status(409).json({ 
                 success: false,
@@ -160,9 +167,17 @@ export async function updateUser(req, res) {
         }
         const user = await User.findByIdAndUpdate(
             req.user.id,
-            { name, email },
+            { name: trimmedName, email: normalizedEmail },
             { new: true, runValidators: true, select: "name email" }
         );
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found.",
+            });
+        }
+
         res.json({ 
             success: true,
             message: "User updated successfully.",
