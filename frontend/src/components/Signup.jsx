@@ -11,8 +11,9 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_URL as DEFAULT_API_URL } from "../utils/api";
 
-const Signup = ({ API_URL = "https://expenso-backend-8529.onrender.com", onSignup }) => {
+const Signup = ({ API_URL = DEFAULT_API_URL, onSignup }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -11,13 +11,15 @@ import dashboardRouter from './routes/dashboardRoutes.js';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+if (!process.env.JWT_SECRET) {
+  console.error('JWT_SECRET is not set. Add it to your backend .env or hosting environment.');
+  process.exit(1);
+}
+
 //MIDDLEWARE
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-//DB
-connectDB();
 
 //ROUTES
 app.use('/api/user', userRouter);
@@ -29,7 +31,17 @@ app.get('/', (req, res) => {
   res.send('API WORKING');
 });
 
-app.listen(PORT, () => {
-  console.log(`Server Started on http://localhost:${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`Server Started on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err.message);
+    process.exit(1);
+  }
+};
+
+startServer();
 

@@ -3,8 +3,9 @@ import { loginStyles } from "../assets/dummyStyles";
 import { User, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_URL as DEFAULT_API_URL } from "../utils/api";
 
-const Login = ({ onLogin, API_URL = "https://expenso-backend-8529.onrender.com" }) => {
+const Login = ({ onLogin, API_URL = DEFAULT_API_URL }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

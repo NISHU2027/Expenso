@@ -26,8 +26,7 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
-
-const API_BASE = "https://expenso-backend-8529.onrender.com/api";
+import { API_BASE } from "../utils/api";
 
 const CATEGORY_ICONS = {
   Food: <Utensils className="w-4 h-4" />,

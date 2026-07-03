@@ -4,8 +4,7 @@ import { navbarStyles } from "../assets/dummyStyles";
 import { ChevronDown, User, LogOut } from "lucide-react";
 import img1 from "../assets/logo.png";
 import axios from 'axios';
-
-const BASE_URL='https://expenso-backend-8529.onrender.com/api'
+import { API_BASE as BASE_URL } from "../utils/api";
 
 const Navbar = ({ user: propUser, onLogout }) => {
   const navigate = useNavigate();

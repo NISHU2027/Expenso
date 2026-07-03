@@ -7,6 +7,10 @@ export const connectDB = async () => {
         throw new Error("MONGODB_URI is not set.");
     }
 
-    await mongoose.connect(uri)
-        .then(() => console.log("DB Connected"))
+    if (/[<>]/.test(uri)) {
+        throw new Error("MONGODB_URI contains angle brackets. Remove placeholder brackets and URL-encode special characters in the username/password.");
+    }
+
+    await mongoose.connect(uri);
+    console.log("DB Connected");
 }

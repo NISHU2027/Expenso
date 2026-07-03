@@ -19,8 +19,7 @@ import FinancialCard from "../components/FinancialCard";
 import GaugeCard from "../components/GaugeCard";
 import AddTransactionModal from "../components/Add";
 import { getAuthHeaders } from "../utils/auth";
-
-const API_BASE = import.meta.env.VITE_API_URL || "https://expenso-backend-8529.onrender.com/api";
+import { API_BASE } from "../utils/api";
 
 function toIsoWithClientTime(dateValue) {
   if (!dateValue) {

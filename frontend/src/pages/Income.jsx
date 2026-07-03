@@ -31,8 +31,7 @@ import FinancialCard from "../components/FinancialCard";
 import { getTimeFrameRange, generateChartPoints } from "../components/Helpers";
 import { INCOME_COLORS, CATEGORY_ICONS_Inc } from "../assets/color";
 import { incomeStyles as styles } from "../assets/dummyStyles";
-
-const API_BASE = "https://expenso-backend-8529.onrender.com/api";
+import { API_BASE } from "../utils/api";
 
 function toIsoWithClientTime(dateValue) {
   if (!dateValue) {

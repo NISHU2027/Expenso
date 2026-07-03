@@ -4,8 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Home, ArrowUp, ArrowDown, User, HelpCircle, LogOut, Menu, X } from "lucide-react";
 import axios from "axios";
-
-const API_BASE = "https://expenso-backend-8529.onrender.com/api";
+import { API_BASE } from "../utils/api";
 
 const MENU_ITEMS = [
   { text: "Dashboard", path: "/", icon: <Home size={20} /> },

@@ -8,8 +8,7 @@ import Signup from "./components/Signup";
 import Income from "./pages/Income";
 import Expense from "./pages/Expense";
 import Profile from "./pages/Profile";
-
-const API_URL = "https://expenso-backend-8529.onrender.com";
+import { API_URL } from "./utils/api";
 
 //to get transaction from localstorage 
 const getTransactionsFromStorage = () => {
@@ -138,7 +137,7 @@ const App = () => {
             const res = await axios.get(`${API_URL}/api/user/me`,{
               headers: {Authorization: `bearer ${storedToken}`}
             });
-            const profile = res.data;
+            const profile = res.data?.user ?? res.data;
             persistAuth(profile, storedToken, tokenFromLocal);
           }
 
