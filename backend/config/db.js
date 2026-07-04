@@ -1,12 +1,18 @@
-import mongoose from 'mongoose';
+import { MongoClient } from 'mongodb';
 
-export const connectDB = async () => {
-    const uri = process.env.MONGODB_URI;
+const client = new MongoClient("mongodb+srv://alokgiri1926_db_user:mGGijnS35BNLrKHR@cluster0.xu6bfhv.mongodb.net/Expenso");
 
-    if (!uri) {
-        throw new Error("MONGODB_URI is not set.");
-    }
+export async function connectToMongoDB() {
+  try {
+    await client.connect();
+    console.log("You successfully connected to MongoDB!");
+    return client;
+  } catch (err) {
+    console.dir(err);
+  }
+}
 
-    await mongoose.connect(uri);
-    console.log("DB Connected");
+// Call this only when your application terminates
+export async function disconnectFromMongoDB() {
+  await client.close();
 }
