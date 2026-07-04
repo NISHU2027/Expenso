@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import mongoose from 'mongoose';
 import 'dotenv/config';
 import { connectDB } from './config/db.js';
 import { validateEnv } from './config/env.js';
@@ -29,6 +30,14 @@ app.get('/', (req, res) => {
   res.send('API WORKING');
 });
 
+app.get('/health', (req, res) => {
+  const state = mongoose.connection.readyState;
+  if (state === 1) {
+    return res.json({ ok: true, db: 'connected' });
+  }
+  return res.status(503).json({ ok: false, db: 'disconnected' });
+});
+
 const startServer = async () => {
   try {
     validateEnv();
@@ -37,11 +46,14 @@ const startServer = async () => {
       console.log(`Server Started on http://localhost:${PORT}`);
     });
   } catch (err) {
-    console.error('Failed to start server:', err.message);
+    console.error('Failed to start server:', err?.message || err);
     console.error(`Current NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
+    // Avoid printing full connection strings; show only that we received a URI.
+    console.error('MONGODB_URI present:', Boolean(process.env.MONGODB_URI));
     process.exit(1);
   }
 };
+
 
 startServer();
 

@@ -27,13 +27,20 @@ export default async function authMiddleware(req, res, next) {
         req.user = user;  //attach user to request
         next();  //proceed to next middleware or route handler
 
-    } 
+    }
     catch (err) {
-        console.error("JWT ERROR:", err.message);
-        return res.status(401).json({ 
-            success: false,
-            message: "Invalid token." 
-        });
+        if (err.name === "TokenExpiredError" || err.name === "JsonWebTokenError") {
+            console.error("JWT ERROR:", err.message);
+            return res.status(401).json({
+                success: false,
+                message: "Invalid token.",
+            });
+        }
 
+        console.error("AUTH DB ERROR:", err.message);
+        return res.status(503).json({
+            success: false,
+            message: "Database unavailable.",
+        });
     }
 }

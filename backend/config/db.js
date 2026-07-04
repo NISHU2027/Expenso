@@ -1,16 +1,33 @@
 import mongoose from 'mongoose';
 
-export async function connectToMongoDB() {
-  try {
-    await mongoose.connect("mongodb+srv://alokgiri1926_db_user:mGGijnS35BNLrKHR@cluster0.xu6bfhv.mongodb.net/Tracker Expense");
-    console.log("You successfully connected to MongoDB!");
-    return mongoose;
-  } catch (err) {
-    console.dir(err);
-  }
-}
+const isDbAuthError = (err) =>
+  err?.code === 8000 ||
+  err?.codeName === 'AtlasError' ||
+  /bad auth|authentication failed/i.test(err?.message ?? '');
 
-// Call this only when your application terminates
-export async function disconnectFromMongoDB() {
-  await mongoose.connection.close();
-}
+export const connectDB = async () => {
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri || !uri.trim()) {
+    throw new Error('Missing required environment variable: MONGODB_URI');
+  }
+
+  try {
+    await mongoose.connect(uri.trim(), {
+      autoIndex: false,
+      serverSelectionTimeoutMS: 10000,
+    });
+
+    console.log('DB CONNECTED');
+  } catch (err) {
+    console.error('DB CONNECTION ERROR', err);
+
+    if (isDbAuthError(err)) {
+      throw new Error(
+        'MongoDB authentication failed. Check MONGODB_URI username, password, and URL-encoding.'
+      );
+    }
+
+    throw err;
+  }
+};

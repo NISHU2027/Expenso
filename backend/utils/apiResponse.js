@@ -1,7 +1,25 @@
 import mongoose from "mongoose";
 
+const isDbAuthError = (error) =>
+  error?.code === 8000 ||
+  error?.codeName === "AtlasError" ||
+  /bad auth|authentication failed/i.test(error?.message ?? "");
+
+const isDbUnavailable = (error) =>
+  isDbAuthError(error) ||
+  error?.name === "MongoServerSelectionError" ||
+  error?.name === "MongooseError";
+
 export const serverError = (res, error, context, message = "Server Error") => {
   console.error(`${context}:`, error);
+
+  if (isDbUnavailable(error)) {
+    return res.status(503).json({
+      success: false,
+      message: "Database connection failed. Please try again later.",
+    });
+  }
+
   return res.status(500).json({
     success: false,
     message,

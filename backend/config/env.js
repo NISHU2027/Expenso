@@ -25,6 +25,11 @@ export const validateEnv = () => {
     if (/[<>]/.test(uri)) {
       errors.push("MONGODB_URI contains angle brackets. Remove placeholder brackets and URL-encode special characters in the username/password");
     }
+
+    const pathPart = uri.split("?")[0].split("/").slice(3).join("/");
+    if (/\s/.test(pathPart)) {
+      errors.push("MONGODB_URI database name contains spaces — use Tracker%20Expense or rename the database");
+    }
   }
 
   if (process.env.PORT) {
