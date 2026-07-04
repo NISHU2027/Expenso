@@ -1,16 +1,16 @@
 import mongoose from 'mongoose';
 
-export const connectDB = async () => {
-  await mongoose.connect("mongodb+srv://alokgiri1926_db_user:mGGijnS35BNLrKHR@cluster0.xu6bfhv.mongodb.net/Expense");
-    try {
-      await mongoose.connect(
-        "mongodb+srv://alokgiri1926_db_user:mGGijnS35BNLrKHR@cluster0.xu6bfhv.mongodb.net/Expense",
-        { useNewUrlParser: true, useUnifiedTopology: true }
-      );
-      console.log("DB CONNECTED");
-    } catch (err) {
-      console.error("DB CONNECTION ERROR", err);
-      process.exit(1);
-    }
-};
+export async function connectToMongoDB() {
+  try {
+    await mongoose.connect("mongodb+srv://alokgiri1926_db_user:mGGijnS35BNLrKHR@cluster0.xu6bfhv.mongodb.net/Tracker Expense");
+    console.log("You successfully connected to MongoDB!");
+    return mongoose;
+  } catch (err) {
+    console.dir(err);
+  }
+}
 
+// Call this only when your application terminates
+export async function disconnectFromMongoDB() {
+  await mongoose.connection.close();
+}
