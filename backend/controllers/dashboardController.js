@@ -1,6 +1,5 @@
 import incomeModel from "../models/incomeModel.js";
 import expenseModel from "../models/expenseModel.js";
-import { serverError } from "../utils/apiResponse.js";
 
 export async function getDashboardData(req, res) {
     const userId = req.user._id;
@@ -55,8 +54,12 @@ export async function getDashboardData(req, res) {
 
 
     }
-    catch (error) {
-        return serverError(res, error, "getDashboardData", "DashBoard Fetch failed");
+    catch (err) {
+        console.error("GetdashboardOverview Error:", err);
+        return res.status(500).json ({
+            success: false,
+            message: "Dashboard Fetch failed"
+        })
     }
 }
 

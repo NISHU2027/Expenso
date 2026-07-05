@@ -95,22 +95,12 @@ export async function updateExpense(req, res) {
 
 //to delete expense
 export async function deleteExpense(req, res) {
-    const userId = req.user._id;
   try {
-    const idError = invalidObjectId(req.params.id, "expense");
-    if (idError) {
-      return res.status(400).json(idError);
-    }
-
-    const expense = await expenseModel.findOneAndDelete({
-      _id: req.params.id,
-      userId,
-    });
-
+    const expense = await expenseModel.find({_id: req.params.id});
     if (!expense) {
-      return res.status(404).json({
+      return res.status(400).json({
         success: false,
-        message: "Expense not found",
+        message: "Expense not found"
       });
     }
 
@@ -119,13 +109,17 @@ export async function deleteExpense(req, res) {
       message: "Expense Deleted Successfully",
     });
   } catch (error) {
-    return serverError(res, error, "deleteExpense");
+    console.log(error);
+    res.status(500).json ({
+      success: false,
+      message: "Server Error"
+    });
   }
 }
 
 //download expense data in excel format
 export async function downloadExpenseExcel(req, res) {
-  const userId = req.user._id;
+   const userId = req.user._id;
   try {
     const expense = await expenseModel.find({ userId }).sort({ date: -1 });
     const plainData = expense.map((exp) => ({
@@ -137,30 +131,23 @@ export async function downloadExpenseExcel(req, res) {
 
     const worksheet = XLSX.utils.json_to_sheet(plainData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "expense");
-    const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+    XLSX.utils.book_append_sheet(workbook, worksheet, "expenseModel");
+    XLSX.writeFile(workbook, "expense_details.xlsx");
+    res.download("expense_details.xlsx");
 
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="expense_details.xlsx"'
-    );
-    res.send(buffer);
-  } catch (error) {
-    return serverError(res, error, "downloadExpenseExcel");
+  } 
+  catch (error) {
+    console.log(error);
+    res.status(500).json ({
+      success: false,
+      message: "Server Error"
+    });
   }
 }
 
-// backward-compatible alias (if any client still calls the older name)
-export const downloadExpense = downloadExpenseExcel;
-
-
 //to get overview of expense
 export async function getExpenseOverview(req, res) {
-    try {
+     try {
         const userId = req.user._id;
         const {range = "monthly"} = req.query;
         const { start, end } = getDataRange(range);
@@ -189,7 +176,12 @@ export async function getExpenseOverview(req, res) {
         });
     }
 
-        catch (error) {
-            return serverError(res, error, "getExpenseOverview");
-        }
+    catch (error) {
+    console.log(error);
+    res.status(500).json ({
+      success: false,
+      message: "Server Error"
+    });
+  }
+
 }

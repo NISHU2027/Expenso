@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, getCurrentUser, updateUser, changePassword } from '../controllers/userController.js';
+import { registerUser, loginUser, getCurrentUser, updateProfile, updatePassword } from '../controllers/userController.js';
 import authMiddleware from '../middleware/auth.js';
 
 
@@ -10,8 +10,8 @@ userRouter.post("/login", loginUser);
 
 
 //procted route
-userRouter.get('/me', authMiddleware, getCurrentUser);
-userRouter.put('/profile', authMiddleware, updateUser);
-userRouter.put('/password', authMiddleware, changePassword);
+userRouter.get("/me", authMiddleware, getCurrentUser);
+userRouter.put("/profile", authMiddleware, updateProfile);
+userRouter.put("/password", authMiddleware, updatePassword);
 
 export default userRouter;

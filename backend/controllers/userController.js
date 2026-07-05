@@ -2,12 +2,10 @@ import User from '../models/userModel.js';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getJwtSecret } from '../config/env.js';
-import { serverError } from '../utils/apiResponse.js';
 
 
 const JWT_SECRET = 'your_jwt_secret_here';
-const TOKEN_EXPIRES = '2d';
+const TOKEN_EXPIRES = '24h';
 
 
 const createToken = (userId) => 
@@ -17,9 +15,6 @@ const createToken = (userId) =>
 //REGISTER USER
 export async function registerUser(req, res) {
     const { name, email, password } = req.body;
-    const normalizedEmail = email?.trim().toLowerCase();
-    const trimmedName = name?.trim();
-
     if (!name || !email || !password) {
         return res.status(400).json({ 
             success: false,
@@ -43,7 +38,7 @@ export async function registerUser(req, res) {
         if (await User.findOne({ email })) {
             return res.status(409).json({ 
                 success: false,
-                message: "Email already exists." 
+                message: "User already exists." 
             });
         }
         const hashed = await bcrypt.hash(password, 10);
@@ -145,31 +140,8 @@ export async function getCurrentUser(req, res) {
     }
 }
 
-// to get login user details
-export async function getCurrentUser(req, res) {
-
-    try {
-        const user = await User.findById(req.user.id).select ("name email");
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found." 
-            });
-        }
-        res.json({success: true, user});
-    }
-
-    catch (err) {
-        console.error(err);
-        res.status(500).json({ 
-            success: false,
-            message: "Server Error."
-        });
-    }
-}
-
 //to update a user profile
-export async function updateUserProfile(req, res) {
+export async function updateProfile(req, res) {
     const { name, email } = req.body; 
     if (!name || !email || !validator.isEmail(email)) {
         return res.status(400).json({ 
@@ -204,13 +176,13 @@ export async function updateUserProfile(req, res) {
     }
 }  
 
-//to update a user password
-export async function updateUserPassword(req, res) {
+//to change user password
+export async function updatePassword(req, res) {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword || newPassword.length < 8) {
         return res.status(400).json({ 
             success: false,
-            message: "Current and new password (min 8 chars) are required." 
+            message: "Password invalid or too short." 
         });
     } 
     try {
