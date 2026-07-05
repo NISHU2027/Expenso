@@ -8,7 +8,7 @@ import Signup from "./components/Signup";
 import Income from "./pages/Income";
 import Expense from "./pages/Expense";
 import Profile from "./pages/Profile";
-import { API_URL } from "./utils/api";
+
 
 //to get transaction from localstorage 
 const getTransactionsFromStorage = () => {

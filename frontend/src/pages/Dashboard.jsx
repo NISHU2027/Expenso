@@ -19,7 +19,11 @@ import FinancialCard from "../components/FinancialCard";
 import GaugeCard from "../components/GaugeCard";
 import AddTransactionModal from "../components/Add";
 import { getAuthHeaders } from "../utils/auth";
-import { API_BASE } from "../utils/api";
+
+
+import { API_URL } from "../utils/api";
+
+const API_BASE = `${API_URL}/api`;
 
 function toIsoWithClientTime(dateValue) {
   if (!dateValue) {
