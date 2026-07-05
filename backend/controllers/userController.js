@@ -5,11 +5,13 @@ import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../config/env.js';
 import { serverError } from '../utils/apiResponse.js';
 
-const TOKEN_EXPIRES = '2d';     // Token expiration time
 
-const createToken = (userId) => {
-    return jwt.sign({ id: userId }, getJwtSecret(), { expiresIn: TOKEN_EXPIRES });
-}
+const JWT_SECRET = 'your_jwt_secret_here';
+const TOKEN_EXPIRES = '2d';
+
+
+const createToken = (userId) => 
+    jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: TOKEN_EXPIRES });
 
 
 //REGISTER USER
@@ -24,7 +26,7 @@ export async function registerUser(req, res) {
             message: "All fields are required." 
         });
     }
-    if (!validator.isEmail(normalizedEmail)) {
+    if (!validator.isEmail(email)) {
         return res.status(400).json({ 
             success: false,
             message: "Invalid email format." 
@@ -38,14 +40,14 @@ export async function registerUser(req, res) {
     }
 
     try {
-        if (await User.findOne({ email: normalizedEmail })) {
+        if (await User.findOne({ email })) {
             return res.status(409).json({ 
                 success: false,
                 message: "Email already exists." 
             });
         }
         const hashed = await bcrypt.hash(password, 10);
-        const user = await User.create({ name: trimmedName, email: normalizedEmail, password: hashed });
+        const user = await User.create({ name, email, password: hashed });
         const token = createToken(user._id);
         res.status(201).json({ 
             success: true,
@@ -60,15 +62,17 @@ export async function registerUser(req, res) {
 
     } 
     catch (err) {
-        return serverError(res, err, "registerUser", "Server error. Please try again later.");
+        console.error(err);
+        res.status(500).json({ 
+            success: false,
+            message: "Server Error."
+        });
     }
 }
 
 //to login a user 
 export async function loginUser(req, res) {
     const { email, password } = req.body;
-    const normalizedEmail = email?.trim().toLowerCase();
-
     if (!email || !password) {
         return res.status(400).json({ 
             success: false,
@@ -78,7 +82,7 @@ export async function loginUser(req, res) {
 
 
     try {
-        const user = await User.findOne({ email: normalizedEmail });
+        const user = await User.findOne({ email });
         if (!user) {
             return res.status(401).json({ 
                 success: false,
@@ -107,7 +111,11 @@ export async function loginUser(req, res) {
 
 
     }catch (err) {
-        return serverError(res, err, "loginUser");
+         console.error(err);
+        res.status(500).json({ 
+            success: false,
+            message: "Server Error."
+        });
         
     }
 }
@@ -129,65 +137,82 @@ export async function getCurrentUser(req, res) {
     }
     
     catch (err) {
-        return serverError(res, err, "getCurrentUser");
+        console.error(err);
+        res.status(500).json({ 
+            success: false,
+            message: "Server Error."
+        });
     }
 }
 
-// to update user details
-export async function updateUser(req, res) {
-    const { name, email } = req.body;
-    const normalizedEmail = email?.trim().toLowerCase();
-    const trimmedName = name?.trim();
-
-    if (!trimmedName || !normalizedEmail || !validator.isEmail(normalizedEmail)) {
-        return res.status(400).json({ 
-            success: false,
-            message: "Valid name and email are required." 
-        });
-    }
+// to get login user details
+export async function getCurrentUser(req, res) {
 
     try {
-        const exists = await User.findOne({ email: normalizedEmail, _id: { $ne: req.user.id } });
-        if (exists) {
-            return res.status(409).json({ 
-                success: false,
-                message: "Email already in use by another account." 
-            });
-        }
-        const user = await User.findByIdAndUpdate(
-            req.user.id,
-            { name: trimmedName, email: normalizedEmail },
-            { new: true, runValidators: true, select: "name email" }
-        );
-
+        const user = await User.findById(req.user.id).select ("name email");
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "User not found.",
+                message: "User not found." 
             });
         }
-
-        res.json({ 
-            success: true,
-            message: "User updated successfully.",
-            user
-        });
+        res.json({success: true, user});
     }
 
     catch (err) {
-        return serverError(res, err, "updateUser");
-    } 
+        console.error(err);
+        res.status(500).json({ 
+            success: false,
+            message: "Server Error."
+        });
+    }
 }
 
-//to change user password
-export async function changePassword(req, res) {
-    const { currentPassword, newPassword } = req.body;  
+//to update a user profile
+export async function updateUserProfile(req, res) {
+    const { name, email } = req.body; 
+    if (!name || !email || !validator.isEmail(email)) {
+        return res.status(400).json({ 
+            success: false,
+            message: "Valid email and name are required." 
+        });
+    }
+    try {
+        const exists = await User.findOne({ email, _id: { $ne: req.user.id } });
+        if (exists) {
+            return res.status(409).json({ 
+                success: false,
+                message: "Email already in use." 
+            });
+        }
+        const user = await User.findByIdAndUpdate(
+            req.user.id, 
+            { name, email }, 
+            { new: true, runValidators: true, select: "name email" }
+        );
+        res.json({ 
+            success: true,
+            user
+        });
+    } 
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ 
+            success: false,
+            message: "Server Error."
+        });
+    }
+}  
+
+//to update a user password
+export async function updateUserPassword(req, res) {
+    const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword || newPassword.length < 8) {
         return res.status(400).json({ 
             success: false,
-            message: "Current password and new password (min 8 chars) are required." 
+            message: "Current and new password (min 8 chars) are required." 
         });
-    }
+    } 
     try {
         const user = await User.findById(req.user.id).select("password");
         if (!user) {
@@ -203,16 +228,18 @@ export async function changePassword(req, res) {
                 message: "Current password is incorrect." 
             });
         }
-        user.password = await bcrypt.hash(newPassword, 10);
+         user.password = await bcrypt.hash(newPassword, 10);
         await user.save();
         res.json({ 
             success: true,
-            message: "Password changed successfully." 
+            message: "Password updated successfully." 
         });
-    } 
-    catch (err) {       
-        return serverError(res, err, "changePassword");
+    }     
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ 
+            success: false,
+            message: "Server Error."
+        });
     }
-
-}   
-    
+}

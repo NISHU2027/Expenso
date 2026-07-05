@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import * as XLSX from "xlsx";
 
 export const exportToExcel = (data, fileName = "transactions") => {
     if(!data || data.length === 0) {

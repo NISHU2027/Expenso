@@ -1,7 +1,6 @@
 import incomeModel from "../models/incomeModel.js";
 import XLSX from "xlsx";
 import getDataRange from "../utils/dataFilter.js";
-import { invalidObjectId, parseTransactionInput, serverError } from "../utils/apiResponse.js";
 
 //add 
 export async function addIncome(req, res) {
@@ -9,14 +8,20 @@ export async function addIncome(req, res) {
   const { description, amount, category, date } = req.body;
 
   try {
-    const { data, error } = parseTransactionInput({ description, amount, category, date });
-    if (error) {
-      return res.status(400).json(error);
+    if (!description || !amount || !category || !date) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+
+      });
     }
 
     const newIncome = new incomeModel({
       userId,
-      ...data,
+      description,
+      amount,
+      category,
+      date: new Date(date)
     });
 
     await newIncome.save();
@@ -24,8 +29,13 @@ export async function addIncome(req, res) {
       success: true,
       message: "Income Added Successfully",
     });
-  } catch (error) {
-    return serverError(res, error, "addIncome");
+  } 
+  catch (error) {
+    console.log(error);
+    res.status(500).json ({
+      success: false,
+      message: "Server Error"
+    });
   }
 }
 
@@ -39,10 +49,12 @@ export async function getAllIncome(req, res) {
     } 
     
     catch (error) {
-        return serverError(res, error, "getAllIncome");
-
-
-    }
+    console.log(error);
+    res.status(500).json ({
+      success: false,
+      message: "Server Error"
+    });
+  }
 
 }
 
@@ -50,51 +62,40 @@ export async function getAllIncome(req, res) {
 export async function updateIncome(req, res) {
   const { id } = req.params;
   const userId = req.user._id;
-  const { description, amount, category, date } = req.body;
+  const { description, amount } = req.body;
 
   try {
-    const idError = invalidObjectId(id, "income");
-    if (idError) {
-      return res.status(400).json(idError);
-    }
-
-    const { data: update, error } = parseTransactionInput({ description, amount, category, date });
-    if (error) {
-      return res.status(400).json(error);
-    }
-
-    const updated = await incomeModel.findOneAndUpdate(
-      { _id: id, userId },
-      update,
-      { new: true, runValidators: true }
+    const updateIncome = await incomeModel.findOneAndUpdate(
+      {_id: id, userId},
+      {description, amount },
+      {new: true }
     );
 
-    if (!updated) {
-      return res.status(404).json({
+    if (!updateIncome) {
+      return res.status(400).json({
         success: false,
-        message: "Income not found",
+        message: "Income not found"
       });
     }
 
     res.json({
       success: true,
       message: "Income Updated Successfully",
-      data: updated,
+      data: updatedIncome,
     });
-  } catch (error) {
-    return serverError(res, error, "updateIncome");
+  } 
+  catch (error) {
+    console.log(error);
+    res.status(500).json ({
+      success: false,
+      message: "Server Error"
+    });
   }
 }
 
 //delete income
 export async function deleteIncome(req, res) {
-  const userId = req.user._id;
   try {
-    const idError = invalidObjectId(req.params.id, "income");
-    if (idError) {
-      return res.status(400).json(idError);
-    }
-
     const income = await incomeModel.findOneAndDelete({
       _id: req.params.id,
       userId,
@@ -111,8 +112,13 @@ export async function deleteIncome(req, res) {
       success: true,
       message: "Income Deleted Successfully",
     });
-  } catch (error) {
-    return serverError(res, error, "deleteIncome");
+  } 
+  catch (error) {
+    console.log(error);
+    res.status(500).json ({
+      success: false,
+      message: "Server Error"
+    });
   }
 }
 
@@ -131,20 +137,17 @@ export async function downloadIncomeExcel(req, res) {
 
     const worksheet = XLSX.utils.json_to_sheet(plainData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "income");
-    const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+    XLSX.utils.book_append_sheet(workbook, worksheet, "incomeModel");
+    XLSX.writeFile(workbook, "income_details.xlsx");
+    res.download("income_details.xlsx");
 
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="income_details.xlsx"'
-    );
-    res.send(buffer);
-  } catch (error) {
-    return serverError(res, error, "downloadIncomeExcel");
+  } 
+  catch (error) {
+    console.log(error);
+    res.status(500).json ({
+      success: false,
+      message: "Server Error"
+    });
   }
 }
 
@@ -180,8 +183,14 @@ export async function getIncomeOverview(req, res) {
         });
     }
 
-        catch (error) {
-            return serverError(res, error, "getIncomeOverview");
-        }
+    catch (error) {
+    console.log(error);
+    res.status(500).json ({
+      success: false,
+      message: "Server Error"
+    });
+  }
+
+       
 }
         
