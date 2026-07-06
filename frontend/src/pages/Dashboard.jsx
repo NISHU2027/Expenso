@@ -24,7 +24,6 @@ import {
   Pie,
   Cell,
   Tooltip,
-  Legend,
   AreaChart,
   Area,
   XAxis,
@@ -207,6 +206,11 @@ const Dashboard = () => {
       value: Math.round(categories[category]),
     }));
   }, [filteredTransactions, overviewMeta, timeFrame]);
+
+  const expenseDistributionTotal = useMemo(
+    () => financialOverviewData.reduce((sum, item) => sum + Number(item.value || 0), 0),
+    [financialOverviewData]
+  );
 
   const trendChartData = useMemo(() => {
     const data = chartPoints.map((point) => ({
@@ -663,48 +667,67 @@ if (newTransaction.type === "income") {
               <p className={dashboardStyles.emptyText}>No expense data for this period</p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart className={chartStyles.pieChart}>
-                <Pie
-                  data={financialOverviewData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={70}
-                  outerRadius={110}
-                  paddingAngle={2}
-                  dataKey="value"
-                  label={({ name, percent }) =>
-                    `${name}: ${Math.round(percent * 100)}%`
-                  }
-                  labelLine={false}
-                >
-                  {financialOverviewData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                      stroke="#fff"
-                      strokeWidth={2}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => [`₹${Math.round(value).toLocaleString()}`, "Amount"]}
-                  contentStyle={dashboardStyles.tooltipContent}
-                  itemStyle={dashboardStyles.tooltipItem}
-                />
-                <Legend
-                  layout="horizontal"
-                  verticalAlign="bottom"
-                  align="center"
-                  formatter={(v) => (
-                    <span className={dashboardStyles.legendText}>{v}</span>
-                  )}
-                  iconSize={10}
-                  iconType="circle"
-                  wrapperStyle={dashboardStyles.legendWrapper}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="grid h-full grid-cols-1 items-center gap-6 md:grid-cols-[minmax(0,1fr)_240px] xl:grid-cols-[minmax(0,1fr)_280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart className={chartStyles.pieChart}>
+                  <Pie
+                    data={financialOverviewData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={112}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {financialOverviewData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                        stroke="#fff"
+                        strokeWidth={2}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => [`₹${Math.round(value).toLocaleString()}`, "Amount"]}
+                    contentStyle={dashboardStyles.tooltipContent}
+                    itemStyle={dashboardStyles.tooltipItem}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+
+              <div className="min-h-0 w-full space-y-2 overflow-y-auto pr-1">
+                {financialOverviewData.map((entry, index) => {
+                  const percent =
+                    expenseDistributionTotal > 0
+                      ? Math.round((Number(entry.value || 0) / expenseDistributionTotal) * 100)
+                      : 0;
+
+                  return (
+                    <div
+                      key={entry.name}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2"
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span
+                          className="h-3 w-3 shrink-0 rounded-full"
+                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        />
+                        <span className="truncate text-sm font-medium text-gray-700">
+                          {entry.name}
+                        </span>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-semibold text-gray-800">{percent}%</p>
+                        <p className="text-xs text-gray-500">
+                          ₹{Math.round(Number(entry.value || 0)).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
       </div>
