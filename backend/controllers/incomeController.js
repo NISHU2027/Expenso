@@ -43,7 +43,12 @@ export async function getAllIncome(req, res) {
   const userId = req.user._id;
   try {
     const income = await incomeModel.find({ userId }).sort({ date: -1 });
-    res.json(income);
+    // Add type field to each income for frontend compatibility
+    const incomesWithType = income.map(inc => ({
+      ...inc.toObject(),
+      type: "income"
+    }));
+    res.json(incomesWithType);
   } catch (error) {
     console.log(error);
     res.status(500).json({

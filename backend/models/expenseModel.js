@@ -11,11 +11,9 @@ const expenseSchema = new mongoose.Schema(
       ref: 'user',
       required: true,
     },
-    type: { type: String, default: 'expense' },
   },
   { timestamps: true }
 );
 
 const expenseModel = mongoose.models.expense || mongoose.model('expense', expenseSchema);
 export default expenseModel;
-

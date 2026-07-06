@@ -45,7 +45,12 @@ export async function getAllExpense(req, res) {
   const userId = req.user._id;
   try {
     const expense = await expenseModel.find({ userId }).sort({ date: -1 });
-    res.json(expense);
+    // Add type field to each expense for frontend compatibility
+    const expensesWithType = expense.map(exp => ({
+      ...exp.toObject(),
+      type: "expense"
+    }));
+    res.json(expensesWithType);
   } catch (error) {
     console.log(error);
     res.status(500).json({
