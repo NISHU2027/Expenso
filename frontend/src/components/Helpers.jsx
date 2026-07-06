@@ -126,8 +126,9 @@ export const calculateData = (transactions) => {
   return { ...totals, savings: totals.income - totals.expenses };
 };
 
-export const generateChartPoints = (timeFrame) => {
+export const generateChartPoints = (timeFrame, range = null) => {
   const now = new Date();
+  const rangeStart = range?.start ? new Date(range.start) : null;
   const points = [];
 
   if (timeFrame === "daily") {
@@ -144,8 +145,8 @@ export const generateChartPoints = (timeFrame) => {
     }
   } else if (timeFrame === "weekly") {
     // Generate 7 days for weekly view (Sunday -> Saturday)
-    const start = new Date(now);
-    start.setDate(now.getDate() - now.getDay());
+    const start = rangeStart ? new Date(rangeStart) : new Date(now);
+    if (!rangeStart) start.setDate(now.getDate() - now.getDay());
     start.setHours(0, 0, 0, 0);
 
     for (let i = 0; i < 7; i++) {
@@ -159,43 +160,53 @@ export const generateChartPoints = (timeFrame) => {
       });
     }
   } else if (timeFrame === "monthly") {
+    const baseDate = rangeStart || now;
     const daysInMonth = new Date(
-      now.getFullYear(),
-      now.getMonth() + 1,
+      baseDate.getFullYear(),
+      baseDate.getMonth() + 1,
       0
     ).getDate();
 
     for (let i = 1; i <= daysInMonth; i++) {
-      const day = new Date(now.getFullYear(), now.getMonth(), i);
+      const day = new Date(baseDate.getFullYear(), baseDate.getMonth(), i);
       points.push({
         date: day,
         label: day.toLocaleDateString("en-US", { day: "numeric" }),
-        isCurrent: i === now.getDate(),
+        isCurrent:
+          i === now.getDate() &&
+          baseDate.getMonth() === now.getMonth() &&
+          baseDate.getFullYear() === now.getFullYear(),
       });
     }
   } else if (timeFrame === "yearly") {
+    const baseDate = rangeStart || now;
     for (let i = 0; i < 12; i++) {
-      const month = new Date(now.getFullYear(), i, 1);
+      const month = new Date(baseDate.getFullYear(), i, 1);
       points.push({
         date: month,
         label: month.toLocaleDateString("en-US", { month: "short" }),
-        isCurrent: i === now.getMonth(),
+        isCurrent:
+          i === now.getMonth() && baseDate.getFullYear() === now.getFullYear(),
       });
     }
   } else {
     // fallback -> monthly
+    const baseDate = rangeStart || now;
     const daysInMonth = new Date(
-      now.getFullYear(),
-      now.getMonth() + 1,
+      baseDate.getFullYear(),
+      baseDate.getMonth() + 1,
       0
     ).getDate();
 
     for (let i = 1; i <= daysInMonth; i++) {
-      const day = new Date(now.getFullYear(), now.getMonth(), i);
+      const day = new Date(baseDate.getFullYear(), baseDate.getMonth(), i);
       points.push({
         date: day,
         label: day.toLocaleDateString("en-US", { day: "numeric" }),
-        isCurrent: i === now.getDate(),
+        isCurrent:
+          i === now.getDate() &&
+          baseDate.getMonth() === now.getMonth() &&
+          baseDate.getFullYear() === now.getFullYear(),
       });
     }
   }

@@ -48,6 +48,10 @@ function getLocalDateInputValue(date = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
+function getLocalDateKey(dateValue) {
+  return getLocalDateInputValue(new Date(dateValue));
+}
+
 function toIsoWithClientTime(dateValue) {
   if (!dateValue) {
     return new Date().toISOString();
@@ -96,7 +100,10 @@ const Dashboard = () => {
 
   const timeFrameRange = useMemo(() => getTimeFrameRange(timeFrame), [timeFrame]);
   const prevTimeFrameRange = useMemo(() => getPreviousTimeFrameRange(timeFrame), [timeFrame]);
-  const chartPoints = useMemo(() => generateChartPoints(timeFrame), [timeFrame]);
+  const chartPoints = useMemo(
+    () => generateChartPoints(timeFrame, timeFrameRange),
+    [timeFrame, timeFrameRange]
+  );
 
   const isDateInRange = (date, start, end) => {
     const transactionDate = new Date(date);
@@ -204,24 +211,20 @@ const Dashboard = () => {
   const trendChartData = useMemo(() => {
     const data = chartPoints.map((point) => ({
       ...point,
+      key: timeFrame === "daily" ? String(point.hour) : getLocalDateKey(point.date),
       income: 0,
       expenses: 0,
       savings: 0,
     }));
+    const dataByKey = new Map(data.map((point) => [point.key, point]));
 
     filteredTransactions.forEach((transaction) => {
       const transactionDate = new Date(transaction.date);
-      const chartPoint = data.find((point) => {
-        if (timeFrame === "daily") {
-          return point.hour === transactionDate.getHours();
-        }
-
-        return (
-          point.date.getDate() === transactionDate.getDate() &&
-          point.date.getMonth() === transactionDate.getMonth() &&
-          point.date.getFullYear() === transactionDate.getFullYear()
-        );
-      });
+      const key =
+        timeFrame === "daily"
+          ? String(transactionDate.getHours())
+          : getLocalDateKey(transactionDate);
+      const chartPoint = dataByKey.get(key);
 
       if (!chartPoint) return;
 
