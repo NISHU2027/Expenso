@@ -8,14 +8,14 @@ export default async function authMiddleware(req, res, next) {
     
     //grad the token
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    const [scheme, token] = authHeader?.split(" ") ?? [];
+
+    if (!token || scheme?.toLowerCase() !== "bearer") {
         return res.status(401).json({ 
             success: false,
             message: "Not authorized or token missing." 
         });
     }
-
-    const token = authHeader.split(" ")[1];
 
     //verify token
     try {

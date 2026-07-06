@@ -21,6 +21,7 @@ import {
 } from "recharts";
 import axios from "axios";
 import { exportToExcel } from "../utils/exportUtils";
+import { getAuthHeaders } from "../utils/auth";
 import FinancialCard from "../components/FinancialCard";
 import TimeFrameSelector from "../components/TimeFrame";
 import TransactionItem from "../components/TransactionItem";
@@ -93,12 +94,6 @@ const ExpensePage = () => {
     range: "monthly",
   });
 
-  // Auth headers helper
-  const getAuthHeaders = useCallback(() => {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }, []);
-
   // Fetch overview (GET /expense/overview?range=...)
   const fetchOverview = useCallback(async (range = timeFrame ?? "monthly") => {
     try {
@@ -117,7 +112,7 @@ const ExpensePage = () => {
     } catch (err) {
       console.error("Failed to fetch expense overview:", err);
     }
-  }, [timeFrame, getAuthHeaders]);
+  }, [timeFrame]);
 
   // Initial load
   useEffect(() => {
