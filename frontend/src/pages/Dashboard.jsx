@@ -11,9 +11,27 @@ import {
   INCOME_CATEGORY_ICONS,
   EXPENSE_CATEGORY_ICONS,
 } from "../assets/color";
-import { getTimeFrameRange, getPreviousTimeFrameRange, calculateData } from "../components/Helpers";
+import {
+  getTimeFrameRange,
+  getPreviousTimeFrameRange,
+  calculateData,
+  generateChartPoints,
+} from "../components/Helpers";
 import axios from 'axios';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ReferenceLine,
+} from "recharts";
 import { Plus, Wallet, ArrowDown, TrendingUp, TrendingDown, PiggyBank, BarChart2, ShoppingCart, ChevronDown, ChevronUp, DollarSign, PieChart as PieChartIcon, ArrowUpRight as ProfitIcon, AlertCircle } from "lucide-react";
 import FinancialCard from "../components/FinancialCard";
 import GaugeCard from "../components/GaugeCard";
@@ -23,6 +41,12 @@ import { getAuthHeaders } from "../utils/auth";
 
 import { API_BASE } from "../utils/api";
 
+function getLocalDateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 function toIsoWithClientTime(dateValue) {
   if (!dateValue) {
@@ -61,7 +85,7 @@ const Dashboard = () => {
   const [fetchError, setFetchError] = useState(null);
 
   const [newTransaction, setNewTransaction] = useState({
-    date: new Date().toISOString().split("T")[0],
+    date: getLocalDateInputValue(),
     description: "",
     amount: "",
     type: "expense",
@@ -72,6 +96,7 @@ const Dashboard = () => {
 
   const timeFrameRange = useMemo(() => getTimeFrameRange(timeFrame), [timeFrame]);
   const prevTimeFrameRange = useMemo(() => getPreviousTimeFrameRange(timeFrame), [timeFrame]);
+  const chartPoints = useMemo(() => generateChartPoints(timeFrame), [timeFrame]);
 
   const isDateInRange = (date, start, end) => {
     const transactionDate = new Date(date);
@@ -175,6 +200,42 @@ const Dashboard = () => {
       value: Math.round(categories[category]),
     }));
   }, [filteredTransactions, overviewMeta, timeFrame]);
+
+  const trendChartData = useMemo(() => {
+    const data = chartPoints.map((point) => ({
+      ...point,
+      income: 0,
+      expenses: 0,
+      savings: 0,
+    }));
+
+    filteredTransactions.forEach((transaction) => {
+      const transactionDate = new Date(transaction.date);
+      const chartPoint = data.find((point) => {
+        if (timeFrame === "daily") {
+          return point.hour === transactionDate.getHours();
+        }
+
+        return (
+          point.date.getDate() === transactionDate.getDate() &&
+          point.date.getMonth() === transactionDate.getMonth() &&
+          point.date.getFullYear() === transactionDate.getFullYear()
+        );
+      });
+
+      if (!chartPoint) return;
+
+      const amount = Math.round(Number(transaction.amount) || 0);
+      if (transaction.type === "income") {
+        chartPoint.income += amount;
+      } else {
+        chartPoint.expenses += amount;
+      }
+      chartPoint.savings = chartPoint.income - chartPoint.expenses;
+    });
+
+    return data;
+  }, [chartPoints, filteredTransactions, timeFrame]);
 
   const serverRecent = overviewMeta.recentTransactions || [];
   const serverRecentIncome = serverRecent
@@ -348,7 +409,7 @@ if (newTransaction.type === "income") {
       await fetchDashboardOverview();
 
       setNewTransaction({
-        date: new Date().toISOString().split("T")[0],
+        date: getLocalDateInputValue(),
         description: "",
         amount: "",
         type: "expense",
@@ -500,6 +561,84 @@ if (newTransaction.type === "income") {
             timeFrameLabel={timeFrameRange.label}
           />
         ))}
+      </div>
+
+      <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+          <h3 className="text-lg md:text-xl font-bold text-gray-800 flex items-center gap-3">
+            <BarChart2 className="w-6 h-6 text-teal-500" />
+            Financial Trend
+            <span className={dashboardStyles.listSubtitle}>({timeFrameRange.label})</span>
+          </h3>
+        </div>
+
+        <div className="h-72 md:h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={trendChartData} margin={{ top: 10, right: 18, left: 4, bottom: 8 }}>
+              <defs>
+                <linearGradient id="dashboardIncomeGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#0d9488" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#0d9488" stopOpacity={0.04} />
+                </linearGradient>
+                <linearGradient id="dashboardExpenseGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#f97316" stopOpacity={0.04} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" vertical={false} />
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#6b7280", fontSize: 12 }}
+                interval={timeFrame === "daily" ? 2 : 0}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "#6b7280", fontSize: 12 }}
+                width={58}
+                tickFormatter={(value) => `₹${Number(value).toLocaleString()}`}
+              />
+              <Tooltip
+                formatter={(value, name) => [
+                  `₹${Math.round(Number(value) || 0).toLocaleString()}`,
+                  name === "expenses" ? "Expenses" : "Income",
+                ]}
+                contentStyle={dashboardStyles.tooltipContent}
+                itemStyle={dashboardStyles.tooltipItem}
+              />
+              <Area
+                type="monotone"
+                dataKey="income"
+                stroke="#0d9488"
+                fill="url(#dashboardIncomeGradient)"
+                strokeWidth={2}
+                activeDot={{ r: 5, fill: "#0d9488" }}
+              />
+              <Area
+                type="monotone"
+                dataKey="expenses"
+                stroke="#f97316"
+                fill="url(#dashboardExpenseGradient)"
+                strokeWidth={2}
+                activeDot={{ r: 5, fill: "#f97316" }}
+              />
+              {trendChartData.map(
+                (point, index) =>
+                  point.isCurrent && (
+                    <ReferenceLine
+                      key={index}
+                      x={point.label}
+                      stroke="#0891b2"
+                      strokeWidth={2}
+                      strokeDasharray="3 3"
+                    />
+                  )
+              )}
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Expense distribution pie */}

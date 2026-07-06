@@ -1,6 +1,13 @@
 import { X } from "lucide-react";
 import { modalStyles } from "../assets/dummyStyles";
 
+function getLocalDateInputValue(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 const AddTransactionModal = ({
   showModal,
   setShowModal,
@@ -19,7 +26,7 @@ const AddTransactionModal = ({
   // Get current date in YYYY-MM-DD format
   const today = new Date();
   const currentYear = today.getFullYear();
-  const currentDate = today.toISOString().split('T')[0];
+  const currentDate = getLocalDateInputValue(today);
   const minDate = `${currentYear}-01-01`;
 
   // FIX: fallback to {} instead of '' so colorClass.ring / .button never
