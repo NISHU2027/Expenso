@@ -156,12 +156,18 @@ const ExpensePage = () => {
   }, []);
 
   // Filter expense transactions from outlet transactions
-  const expenseTransactions = useMemo(
-    () => (outletTransactions || [])
-      .filter(t => t.type === "expense")
-      .sort((a, b) => new Date(b.date) - new Date(a.date)),
-    [outletTransactions]
-  );
+  // Ensure every expense has a stable `id` for update/delete.
+  const expenseTransactions = useMemo(() => {
+    const normalizeId = (t) => t?.id ?? t?._id ?? t?._id?.toString?.();
+
+    return (outletTransactions || [])
+      .filter((t) => t.type === "expense")
+      .map((t) => ({
+        ...t,
+        id: normalizeId(t),
+      }))
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [outletTransactions]);
 
   // Filter transactions by time frame
   const timeFrameTransactions = useMemo(
