@@ -239,9 +239,10 @@ const ExpensePage = () => {
   const handleApiRequest = async (method, url, data = null) => {
     try {
       setLoading(true);
+      const endpoint = url.startsWith("/") ? url : `/${url}`;
       const config = {
         method,
-        url: `${API_BASE}${url}`,
+        url: `${API_BASE}${endpoint}`,
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       };
       
@@ -264,18 +265,27 @@ const ExpensePage = () => {
 
   // Add expense -> POST /expense/add
   const handleAddTransaction = async () => {
-    if (!newTransaction.description || !newTransaction.amount) return;
+    const parsedAmount = parseFloat(newTransaction.amount);
+    if (
+      !newTransaction.description?.trim() ||
+      !newTransaction.amount ||
+      Number.isNaN(parsedAmount) ||
+      parsedAmount <= 0
+    ) {
+      alert("Please enter a valid description and a positive amount.");
+      return;
+    }
 
     try {
       // Convert date-only to ISO with client time before sending
       const payload = {
         description: newTransaction.description.trim(),
-        amount: parseFloat(newTransaction.amount),
+        amount: parsedAmount,
         category: newTransaction.category,
         date: toIsoWithClientTime(newTransaction.date),
       };
 
-await handleApiRequest('post', 'expense/add', payload);
+      await handleApiRequest("post", "expense/add", payload);
 
       // If added date is outside the current visible range, switch view to that month
       const addedDate = new Date(payload.date || newTransaction.date);
@@ -301,17 +311,27 @@ await handleApiRequest('post', 'expense/add', payload);
 
   // Edit expense -> PUT /expense/update/:id
   const handleEditTransaction = async () => {
-    if (!editingId || !editForm.description || !editForm.amount) return;
+    const parsedAmount = parseFloat(editForm.amount);
+    if (
+      !editingId ||
+      !editForm.description?.trim() ||
+      !editForm.amount ||
+      Number.isNaN(parsedAmount) ||
+      parsedAmount <= 0
+    ) {
+      alert("Please enter a valid description and a positive amount.");
+      return;
+    }
 
     try {
       const payload = {
         description: editForm.description.trim(),
-        amount: parseFloat(editForm.amount),
+        amount: parsedAmount,
         category: editForm.category,
         date: toIsoWithClientTime(editForm.date),
       };
 
-await handleApiRequest('put', `expense/update/${editingId}`, payload);
+      await handleApiRequest("put", `expense/update/${editingId}`, payload);
       setEditingId(null);
     } catch {
       // Error handled in handleApiRequest
