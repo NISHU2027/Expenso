@@ -12,7 +12,6 @@ export async function addIncome(req, res) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
-
       });
     }
 
@@ -29,10 +28,9 @@ export async function addIncome(req, res) {
       success: true,
       message: "Income Added Successfully",
     });
-  } 
-  catch (error) {
+  } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
@@ -42,33 +40,30 @@ export async function addIncome(req, res) {
 
 //to get all income of a user
 export async function getAllIncome(req, res) {
-    const userId = req.user._id;
-    try {
-        const income = await incomeModel.find({ userId }).sort({ date: -1 });
-        res.json(income);
-    } 
-    
-    catch (error) {
+  const userId = req.user._id;
+  try {
+    const income = await incomeModel.find({ userId }).sort({ date: -1 });
+    res.json(income);
+  } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
   }
-
 }
 
 //update income
 export async function updateIncome(req, res) {
   const { id } = req.params;
   const userId = req.user._id;
-  const { description, amount } = req.body;
+  const { description, amount, category, date } = req.body;
 
   try {
     const updateIncome = await incomeModel.findOneAndUpdate(
-      {_id: id, userId},
-      {description, amount },
-      {new: true }
+      { _id: id, userId },
+      { description, amount, category, date: date ? new Date(date) : undefined },
+      { new: true }
     );
 
     if (!updateIncome) {
@@ -83,10 +78,9 @@ export async function updateIncome(req, res) {
       message: "Income Updated Successfully",
       data: updateIncome,
     });
-  } 
-  catch (error) {
+  } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
@@ -113,10 +107,9 @@ export async function deleteIncome(req, res) {
       success: true,
       message: "Income Deleted Successfully",
     });
-  } 
-  catch (error) {
+  } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
@@ -141,11 +134,9 @@ export async function downloadIncomeExcel(req, res) {
     XLSX.utils.book_append_sheet(workbook, worksheet, "incomeModel");
     XLSX.writeFile(workbook, "income_details.xlsx");
     res.download("income_details.xlsx");
-
-  } 
-  catch (error) {
+  } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
@@ -154,42 +145,38 @@ export async function downloadIncomeExcel(req, res) {
 
 //to get income overview
 export async function getIncomeOverview(req, res) {
+  try {
+    const userId = req.user._id;
+    const { range = "monthly" } = req.query;
+    const { start, end } = getDateRange(range);
 
-    try {
-        const userId = req.user._id;
-        const {range = "monthly"} = req.query;
-        const { start, end } = getDateRange(range);
+    const income = await incomeModel
+      .find({
+        userId,
+        date: { $gte: start, $lte: end },
+      })
+      .sort({ date: -1 });
 
-        const income = await incomeModel
-            .find({
-                userId,
-                date: { $gte: start, $lte: end },
-            })
-            .sort({ date: -1 });
+    const totalIncome = income.reduce((acc, cur) => acc + cur.amount, 0);
+    const averageIncome = income.length > 0 ? totalIncome / income.length : 0;
+    const numberOfTransactions = income.length;
+    const recentTransactions = income.slice(0, 9);
 
-        const totalIncome = income.reduce((acc, cur) => acc + cur.amount, 0);
-        const averageIncome = income.length > 0 ? totalIncome / income.length : 0;
-        const numberOfTransactions = income.length;
-        const recentTransactions = income.slice(0, 9);
-
-        res.json({
-            success: true,
-            data: {
-                totalIncome,
-                averageIncome,
-                numberOfTransactions,
-                recentTransactions,
-                range,
-            },
-        });
-    }
-
-    catch (error) {
+    res.json({
+      success: true,
+      data: {
+        totalIncome,
+        averageIncome,
+        numberOfTransactions,
+        recentTransactions,
+        range,
+      },
+    });
+  } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
-  }      
+  }
 }
-        

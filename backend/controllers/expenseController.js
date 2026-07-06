@@ -3,7 +3,6 @@ import XLSX from "xlsx";
 import getDateRange from "../utils/dataFilter.js";
 
 
-
 //add expense
 export async function addExpense(req, res) {
   const userId = req.user._id;
@@ -14,7 +13,6 @@ export async function addExpense(req, res) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
-
       });
     }
 
@@ -31,10 +29,9 @@ export async function addExpense(req, res) {
       success: true,
       message: "Expense Added Successfully",
     });
-  } 
-  catch (error) {
+  } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
@@ -44,14 +41,13 @@ export async function addExpense(req, res) {
 
 //to all expenses of a user
 export async function getAllExpense(req, res) {
-    const userId = req.user._id;
-    try {       
-        const expense = await expenseModel.find({ userId }).sort({ date: -1 });
-        res.json(expense);
-    }   
-    catch (error) {
+  const userId = req.user._id;
+  try {
+    const expense = await expenseModel.find({ userId }).sort({ date: -1 });
+    res.json(expense);
+  } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
@@ -62,13 +58,13 @@ export async function getAllExpense(req, res) {
 export async function updateExpense(req, res) {
   const { id } = req.params;
   const userId = req.user._id;
-  const { description, amount } = req.body;
+  const { description, amount, category, date } = req.body;
 
   try {
     const updateExpense = await expenseModel.findOneAndUpdate(
-      {_id: id, userId},
-      {description, amount },
-      {new: true }
+      { _id: id, userId },
+      { description, amount, category, date: date ? new Date(date) : undefined },
+      { new: true }
     );
 
     if (!updateExpense) {
@@ -83,10 +79,9 @@ export async function updateExpense(req, res) {
       message: "Expense Updated Successfully",
       data: updateExpense,
     });
-  } 
-  catch (error) {
+  } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
@@ -115,7 +110,7 @@ export async function deleteExpense(req, res) {
     });
   } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
@@ -124,7 +119,7 @@ export async function deleteExpense(req, res) {
 
 //download expense data in excel format
 export async function downloadExpenseExcel(req, res) {
-   const userId = req.user._id;
+  const userId = req.user._id;
   try {
     const expense = await expenseModel.find({ userId }).sort({ date: -1 });
     const plainData = expense.map((exp) => ({
@@ -139,11 +134,9 @@ export async function downloadExpenseExcel(req, res) {
     XLSX.utils.book_append_sheet(workbook, worksheet, "expenseModel");
     XLSX.writeFile(workbook, "expense_details.xlsx");
     res.download("expense_details.xlsx");
-
-  } 
-  catch (error) {
+  } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
@@ -152,41 +145,38 @@ export async function downloadExpenseExcel(req, res) {
 
 //to get overview of expense
 export async function getExpenseOverview(req, res) {
-     try {
-        const userId = req.user._id;
-        const {range = "monthly"} = req.query;
-        const { start, end } = getDateRange(range);
+  try {
+    const userId = req.user._id;
+    const { range = "monthly" } = req.query;
+    const { start, end } = getDateRange(range);
 
-        const expense = await expenseModel
-            .find({
-                userId,
-                date: { $gte: start, $lte: end },
-            })
-            .sort({ date: -1 });
+    const expense = await expenseModel
+      .find({
+        userId,
+        date: { $gte: start, $lte: end },
+      })
+      .sort({ date: -1 });
 
-        const totalExpense = expense.reduce((acc, cur) => acc + cur.amount, 0);
-        const averageExpense = expense.length > 0 ? totalExpense / expense.length : 0;
-        const numberOfTransactions = expense.length;
-        const recentTransactions = expense.slice(0, 5);
+    const totalExpense = expense.reduce((acc, cur) => acc + cur.amount, 0);
+    const averageExpense = expense.length > 0 ? totalExpense / expense.length : 0;
+    const numberOfTransactions = expense.length;
+    const recentTransactions = expense.slice(0, 5);
 
-        res.json({
-            success: true,
-            data: {
-                totalExpense,
-                averageExpense,
-                numberOfTransactions,
-                recentTransactions,
-                range,
-            },
-        });
-    }
-
-    catch (error) {
+    res.json({
+      success: true,
+      data: {
+        totalExpense,
+        averageExpense,
+        numberOfTransactions,
+        recentTransactions,
+        range,
+      },
+    });
+  } catch (error) {
     console.log(error);
-    res.status(500).json ({
+    res.status(500).json({
       success: false,
       message: "Server Error"
     });
   }
-
 }
