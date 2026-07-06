@@ -15,6 +15,6 @@ const API_URL = import.meta.env.VITE_API_URL || fallbackApiUrl;
 
 // Some parts of the app import API_BASE as the base.
 // Keep it consistent.
-const API_BASE = API_URL;
+const API_BASE = `${API_URL}/api`;
 
 export { API_URL, API_BASE };

@@ -269,7 +269,7 @@ const ExpensePage = () => {
         date: toIsoWithClientTime(newTransaction.date),
       };
 
-      await handleApiRequest('post', '/expense/add', payload);
+await handleApiRequest('post', 'expense/add', payload);
 
       // If added date is outside the current visible range, switch view to that month
       const addedDate = new Date(payload.date || newTransaction.date);
@@ -305,7 +305,7 @@ const ExpensePage = () => {
         date: toIsoWithClientTime(editForm.date),
       };
 
-      await handleApiRequest('put', `/expense/update/${editingId}`, payload);
+await handleApiRequest('put', `expense/update/${editingId}`, payload);
       setEditingId(null);
     } catch {
       // Error handled in handleApiRequest
@@ -315,7 +315,7 @@ const ExpensePage = () => {
   // Delete expense -> DELETE /expense/delete/:id
   const handleDeleteTransaction = async (id) => {
     if (!id || !window.confirm("Are you sure you want to delete this expense?")) return;
-    await handleApiRequest('delete', `/expense/delete/${id}`);
+    await handleApiRequest('delete', `expense/delete/${id}`);
   };
 
   // Export -> GET /expense/downloadexcel (server) with client fallback

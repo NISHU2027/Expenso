@@ -133,7 +133,7 @@ const Layout = ({ user, onLogout }) => {
     [transactions, timeFrame]
   );
 
-  const addTransaction = useCallback(
+const addTransaction = useCallback(
     async (transaction) => {
       try {
         const headers = getAuthHeaders();

@@ -21,9 +21,7 @@ import AddTransactionModal from "../components/Add";
 import { getAuthHeaders } from "../utils/auth";
 
 
-import { API_URL } from "../utils/api";
-
-const API_BASE = `${API_URL}`;
+import { API_BASE } from "../utils/api";
 
 
 function toIsoWithClientTime(dateValue) {
@@ -228,7 +226,7 @@ const Dashboard = () => {
       setLoading(true);
       setFetchError(null);
 
-const res = await axios.get(`${API_BASE}/api/dashboard`, {
+const res = await axios.get(`${API_BASE}/dashboard`, {
         headers: getAuthHeaders(),
       });
 
@@ -336,14 +334,12 @@ console.warn("Dashboard endpoint returned success:false", res?.data);
       setLoading(true);
       setFetchError(null);
 
-      if (newTransaction.type === "income") {
-await axios.post(`${API_BASE}/api/income/add`, payload, {
-
+if (newTransaction.type === "income") {
+        await axios.post(`${API_BASE}/income/add`, payload, {
           headers: getAuthHeaders(),
         });
       } else {
-await axios.post(`${API_BASE}/api/expense/add`, payload, {
-
+        await axios.post(`${API_BASE}/expense/add`, payload, {
           headers: getAuthHeaders(),
         });
       }
