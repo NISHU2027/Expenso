@@ -23,7 +23,8 @@ import { getAuthHeaders } from "../utils/auth";
 
 import { API_URL } from "../utils/api";
 
-const API_BASE = `${API_URL}/api`;
+const API_BASE = `${API_URL}`;
+
 
 function toIsoWithClientTime(dateValue) {
   if (!dateValue) {
@@ -227,7 +228,7 @@ const Dashboard = () => {
       setLoading(true);
       setFetchError(null);
 
-      const res = await axios.get(`${API_BASE}/dashboard`, {
+const res = await axios.get(`${API_BASE}/api/dashboard`, {
         headers: getAuthHeaders(),
       });
 
@@ -293,7 +294,7 @@ const Dashboard = () => {
           ]);
         }
       } else {
-        console.warn("Dashboard endpoint returned success:false", res?.data);
+console.warn("Dashboard endpoint returned success:false", res?.data);
         setFetchError("Couldn't load the latest dashboard data. Showing local data instead.");
       }
     } catch (err) {
@@ -336,11 +337,13 @@ const Dashboard = () => {
       setFetchError(null);
 
       if (newTransaction.type === "income") {
-        await axios.post(`${API_BASE}/income/add`, payload, {
+await axios.post(`${API_BASE}/api/income/add`, payload, {
+
           headers: getAuthHeaders(),
         });
       } else {
-        await axios.post(`${API_BASE}/expense/add`, payload, {
+await axios.post(`${API_BASE}/api/expense/add`, payload, {
+
           headers: getAuthHeaders(),
         });
       }
