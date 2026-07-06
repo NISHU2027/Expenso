@@ -41,27 +41,6 @@ const CATEGORY_ICONS = {
   Savings: <PiggyBank className="w-4 h-4" />,
 };
 
-const filterTransactions = (transactions, frame) => {
-  const now = new Date();
-  const today = new Date(now).setHours(0, 0, 0, 0);
-
-  switch (frame) {
-    case "daily":
-      return transactions.filter((t) => new Date(t.date) >= today);
-    case "weekly": {
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-      return transactions.filter((t) => new Date(t.date) >= startOfWeek);
-    }
-    case "monthly":
-      return transactions.filter(
-        (t) => new Date(t.date).getMonth() === now.getMonth()
-      );
-    default:
-      return transactions;
-  }
-};
-
 const safeArrayFromResponse = (res) => {
   const body = res?.data;
   if (!body) return [];
@@ -127,11 +106,6 @@ const Layout = ({ user, onLogout }) => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTransactions();
   }, [fetchTransactions]);
-
-  const filteredTransactions = useMemo(
-    () => filterTransactions(transactions, timeFrame),
-    [transactions, timeFrame]
-  );
 
 const addTransaction = useCallback(
     async (transaction) => {
@@ -277,9 +251,9 @@ const addTransaction = useCallback(
     return "This Month";
   }, [timeFrame]);
 
-  const outletContext = useMemo(
+const outletContext = useMemo(
     () => ({
-      transactions: filteredTransactions,
+      transactions: transactions,
       addTransaction,
       editTransaction,
       deleteTransaction,
@@ -289,7 +263,7 @@ const addTransaction = useCallback(
       lastUpdated,
     }),
     [
-      filteredTransactions,
+      transactions,
       timeFrame,
       lastUpdated,
       fetchTransactions,
