@@ -1,4 +1,4 @@
-import User from '../models/userModel.js';
+import userModel from '../models/userModel.js';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -35,14 +35,14 @@ export async function registerUser(req, res) {
     }
 
     try {
-        if (await User.findOne({ email })) {
+        if (await userModel.findOne({ email })) {
             return res.status(409).json({ 
                 success: false,
                 message: "User already exists." 
             });
         }
         const hashed = await bcrypt.hash(password, 10);
-        const user = await User.create({ name, email, password: hashed });
+        const user = await userModel.create({ name, email, password: hashed });
         const token = createToken(user._id);
         res.status(201).json({ 
             success: true,
@@ -77,7 +77,7 @@ export async function loginUser(req, res) {
 
 
     try {
-        const user = await User.findOne({ email });
+        const user = await userModel.findOne({ email });
         if (!user) {
             return res.status(401).json({ 
                 success: false,
@@ -118,7 +118,7 @@ export async function loginUser(req, res) {
 // to get login user details
 export async function getCurrentUser(req, res) {
     try {
-        const user = await User.findById(req.user.id).select("name email");
+        const user = await userModel.findById(req.user.id).select("name email");
         if (!user) {
             return res.status(404).json({ 
                 success: false,
@@ -150,14 +150,14 @@ export async function updateProfile(req, res) {
         });
     }
     try {
-        const exists = await User.findOne({ email, _id: { $ne: req.user.id } });
+        const exists = await userModel.findOne({ email, _id: { $ne: req.user.id } });
         if (exists) {
             return res.status(409).json({ 
                 success: false,
                 message: "Email already in use." 
             });
         }
-        const user = await User.findByIdAndUpdate(
+        const user = await userModel.findByIdAndUpdate(
             req.user.id, 
             { name, email }, 
             { new: true, runValidators: true, select: "name email" }
@@ -186,7 +186,7 @@ export async function updatePassword(req, res) {
         });
     } 
     try {
-        const user = await User.findById(req.user.id).select("password");
+        const user = await userModel.findById(req.user.id).select("password");
         if (!user) {
             return res.status(404).json({ 
                 success: false,

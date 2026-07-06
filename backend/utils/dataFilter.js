@@ -23,4 +23,4 @@ const getDateRange = (range) => {
   return { start, end: new Date() };
 };
 
-export default getDateRange 
+export default getDateRange;

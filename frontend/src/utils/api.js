@@ -6,7 +6,7 @@
 //
 // You can override this at build/runtime via:
 //   VITE_API_URL
-// Example: VITE_API_URL=http://localhost:5000
+// Example: VITE_API_URL=http://localhost:4000
 
 const fallbackApiUrl = "https://expenso-backend-52g9.onrender.com";
 
@@ -18,4 +18,3 @@ const API_URL = import.meta.env.VITE_API_URL || fallbackApiUrl;
 const API_BASE = API_URL;
 
 export { API_URL, API_BASE };
-

@@ -1,6 +1,6 @@
 import expenseModel from "../models/expenseModel.js";
 import XLSX from "xlsx";
-import getDataRange from "../utils/dataFilter.js";
+import getDateRange from "../utils/dataFilter.js";
 
 
 
@@ -81,7 +81,7 @@ export async function updateExpense(req, res) {
     res.json({
       success: true,
       message: "Expense Updated Successfully",
-      data: updatedExpense,
+      data: updateExpense,
     });
   } 
   catch (error) {
@@ -95,12 +95,17 @@ export async function updateExpense(req, res) {
 
 //to delete expense
 export async function deleteExpense(req, res) {
+  const userId = req.user._id;
   try {
-    const expense = await expenseModel.find({_id: req.params.id});
+    const expense = await expenseModel.findOneAndDelete({
+      _id: req.params.id,
+      userId,
+    });
+
     if (!expense) {
-      return res.status(400).json({
+      return res.status(404).json({
         success: false,
-        message: "Expense not found"
+        message: "Expense not found",
       });
     }
 
@@ -150,7 +155,7 @@ export async function getExpenseOverview(req, res) {
      try {
         const userId = req.user._id;
         const {range = "monthly"} = req.query;
-        const { start, end } = getDataRange(range);
+        const { start, end } = getDateRange(range);
 
         const expense = await expenseModel
             .find({

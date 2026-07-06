@@ -1,4 +1,4 @@
-import User from '../models/userModel.js';
+import userModel from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
 
 
@@ -20,7 +20,7 @@ export default async function authMiddleware(req, res, next) {
     //verify token
     try {
         const payload = jwt.verify(token, JWT_SECRET);
-        const user = await User.findById(payload.id).select("-password");
+        const user = await userModel.findById(payload.id).select("-password");
         if (!user) {
             return res.status(401).json({ 
                 success: false,
@@ -39,4 +39,3 @@ export default async function authMiddleware(req, res, next) {
             });
     }
 }
-

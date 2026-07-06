@@ -1,6 +1,6 @@
 import incomeModel from "../models/incomeModel.js";
 import XLSX from "xlsx";
-import getDataRange from "../utils/dataFilter.js";
+import getDateRange from "../utils/dataFilter.js";
 
 //add 
 export async function addIncome(req, res) {
@@ -81,7 +81,7 @@ export async function updateIncome(req, res) {
     res.json({
       success: true,
       message: "Income Updated Successfully",
-      data: updatedIncome,
+      data: updateIncome,
     });
   } 
   catch (error) {
@@ -95,6 +95,7 @@ export async function updateIncome(req, res) {
 
 //delete income
 export async function deleteIncome(req, res) {
+  const userId = req.user._id;
   try {
     const income = await incomeModel.findOneAndDelete({
       _id: req.params.id,
@@ -157,7 +158,7 @@ export async function getIncomeOverview(req, res) {
     try {
         const userId = req.user._id;
         const {range = "monthly"} = req.query;
-        const { start, end } = getDataRange(range);
+        const { start, end } = getDateRange(range);
 
         const income = await incomeModel
             .find({
@@ -189,8 +190,6 @@ export async function getIncomeOverview(req, res) {
       success: false,
       message: "Server Error"
     });
-  }
-
-       
+  }      
 }
         
