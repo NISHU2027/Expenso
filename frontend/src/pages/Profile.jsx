@@ -101,11 +101,11 @@ const Profile = ({ onUpdateProfile, onLogout }) => {
     [getAuthtoken, navigate],
   );
 
-//to fetch current user
+  //to fetch current user
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const data = await handleApiRequest("get", "user/me");
+        const data = await handleApiRequest("get", "/user/me");
         if (data) {
           const userData = data.user || data;
           setUser(userData);
@@ -136,10 +136,10 @@ const Profile = ({ onUpdateProfile, onLogout }) => {
     setShowPassword(prev => ({ ...prev, [field]: !prev[field] }));
   }, []);
 
-//save profile
+  //save profile
   const handleSaveProfile = async () => {
     try {
-      const data = await handleApiRequest("put", "user/profile", tempUser);
+      const data = await handleApiRequest("put", "/user/profile", tempUser);
       if (data) {
         const updatedUser = data.user || data;
         setUser(updatedUser);
@@ -175,14 +175,14 @@ const Profile = ({ onUpdateProfile, onLogout }) => {
     return Object.keys(errors).length === 0;
   };
 
-// Change password
+  // Change password
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (!validatePassword()) {
       return;
     }
     try {
-      await handleApiRequest("put", "user/password", {
+      await handleApiRequest("put", "/user/password", {
         currentPassword: passwordData.current,
         newPassword: passwordData.new,
       });

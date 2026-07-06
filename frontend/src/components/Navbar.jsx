@@ -64,7 +64,7 @@ const Navbar = ({ user: propUser, onLogout }) => {
   const handleLogout = () => {
     setMenuOpen(false);
     localStorage.removeItem("token");
-    onLogout?. ();
+    onLogout?.();
     navigate("/login");
   };
 
