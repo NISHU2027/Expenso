@@ -30,10 +30,11 @@ export async function addExpense(req, res) {
       message: "Expense Added Successfully",
     });
   } catch (error) {
-    console.log(error);
+    console.error("Add expense error:", error);
     res.status(500).json({
       success: false,
-      message: "Server Error"
+      message: "Server Error",
+      error: error.message || String(error)
     });
   }
 }
